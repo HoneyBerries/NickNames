@@ -11,8 +11,11 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.logging.Level;
 
 /**
  * Brigadier definition of {@code /nick <nickname>}.
@@ -21,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
  * greedy string argument, so it may contain spaces, and is parsed with
  * {@link MiniMessage} so tags such as {@code <red>} or {@code <gradient:red:blue>}
  * are turned into formatting.</p>
+ *
+ * <p>The raw MiniMessage text is saved to the {@link NicknameRepository} so the nickname
+ * is restored when the player rejoins (see {@link NicknameListener}).</p>
  *
  * <p>Running {@code /nick} with no argument prints the usage message.</p>
  */
@@ -38,13 +44,16 @@ public final class NickCommand {
     /**
      * Builds the {@code /nick} command tree.
      *
+     * @param plugin     the owning plugin, used for logging save failures
+     * @param repository the store the nickname is persisted to
      * @return the root literal node, ready to be passed to a {@code Commands} registrar
      */
-    public static @NotNull LiteralCommandNode<CommandSourceStack> create() {
+    public static @NotNull LiteralCommandNode<CommandSourceStack> create(
+            @NotNull Plugin plugin, @NotNull NicknameRepository repository) {
         return Commands.literal("nick")
                 .executes(NickCommand::sendUsage)
                 .then(Commands.argument(NICKNAME_ARGUMENT, StringArgumentType.greedyString())
-                        .executes(NickCommand::setNickname))
+                        .executes(context -> setNickname(context, plugin, repository)))
                 .build();
     }
 
@@ -63,12 +72,16 @@ public final class NickCommand {
     }
 
     /**
-     * Executed for {@code /nick <nickname>}; applies the nickname to the player.
+     * Executed for {@code /nick <nickname>}; applies the nickname to the player immediately
+     * and saves it in the background so it persists across logins.
      *
-     * @param context the Brigadier command context
+     * @param context    the Brigadier command context
+     * @param plugin     the owning plugin, used for logging save failures
+     * @param repository the store the nickname is persisted to
      * @return {@link Command#SINGLE_SUCCESS}
      */
-    private static int setNickname(@NotNull CommandContext<CommandSourceStack> context) {
+    private static int setNickname(@NotNull CommandContext<CommandSourceStack> context,
+                                   @NotNull Plugin plugin, @NotNull NicknameRepository repository) {
         Player player = NickCommand.requirePlayer(context);
         if (player == null) {
             return Command.SINGLE_SUCCESS;
@@ -83,6 +96,16 @@ public final class NickCommand {
 
         player.sendMessage(Component.text("Your nickname has been set to ", NamedTextColor.GREEN)
                 .append(nickname));
+
+        // Persist so the nickname is restored on the next login
+        repository.save(player.getUniqueId(), raw).whenComplete((ignored, error) -> {
+            if (error != null) {
+                plugin.getLogger().log(Level.WARNING, "Could not save nickname for " + player.getName(), error);
+                player.sendMessage(Component.text(
+                        "Your nickname was set, but could not be saved and will reset when you log out.",
+                        NamedTextColor.RED));
+            }
+        });
         return Command.SINGLE_SUCCESS;
     }
 
