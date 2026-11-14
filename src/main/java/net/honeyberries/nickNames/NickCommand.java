@@ -69,7 +69,7 @@ public final class NickCommand {
      * @return {@link Command#SINGLE_SUCCESS}
      */
     private static int setNickname(@NotNull CommandContext<CommandSourceStack> context) {
-        Player player = requirePlayer(context);
+        Player player = NickCommand.requirePlayer(context);
         if (player == null) {
             return Command.SINGLE_SUCCESS;
         }
@@ -77,8 +77,10 @@ public final class NickCommand {
         String raw = StringArgumentType.getString(context, NICKNAME_ARGUMENT).trim();
         Component nickname = MINI_MESSAGE.deserialize(raw);
 
+        // Change the player's nickname
         player.displayName(nickname);
         player.playerListName(nickname);
+
         player.sendMessage(Component.text("Your nickname has been set to ", NamedTextColor.GREEN)
                 .append(nickname));
         return Command.SINGLE_SUCCESS;
@@ -91,7 +93,7 @@ public final class NickCommand {
      * @param context the Brigadier command context
      * @return the executing player, or {@code null} if the executor is not a player
      */
-    private static @Nullable Player requirePlayer(@NotNull CommandContext<CommandSourceStack> context) {
+    public static @Nullable Player requirePlayer(@NotNull CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         CommandSender executor = source.getExecutor() != null ? source.getExecutor() : source.getSender();
         if (executor instanceof Player player) {

@@ -41,7 +41,7 @@ public final class UnnickCommand {
      * @return {@link Command#SINGLE_SUCCESS}
      */
     private static int removeNickname(@NotNull CommandContext<CommandSourceStack> context) {
-        Player player = requirePlayer(context);
+        Player player = NickCommand.requirePlayer(context);
         if (player == null) {
             return Command.SINGLE_SUCCESS;
         }
@@ -53,20 +53,5 @@ public final class UnnickCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    /**
-     * Resolves the command's executor as a {@link Player}. If the executor is not a
-     * player, they are told the command is player-only.
-     *
-     * @param context the Brigadier command context
-     * @return the executing player, or {@code null} if the executor is not a player
-     */
-    private static @Nullable Player requirePlayer(@NotNull CommandContext<CommandSourceStack> context) {
-        CommandSourceStack source = context.getSource();
-        CommandSender executor = source.getExecutor() != null ? source.getExecutor() : source.getSender();
-        if (executor instanceof Player player) {
-            return player;
-        }
-        source.getSender().sendMessage(Component.text("This command is for players only."));
-        return null;
-    }
+
 }
