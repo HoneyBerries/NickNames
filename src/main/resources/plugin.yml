@@ -1,0 +1,13 @@
+name: NickNames
+version: '${version}'
+description: Lets players set a custom, MiniMessage-formatted nickname with /nick and remove it with /unnick.
+
+main: net.honeyberries.nickNames.NickNames
+api-version: '26.3'
+load: POSTWORLD
+
+authors: [ HoneyBerries, Pepmon270 ]
+website: https://honeyberries.net
+
+# /nick and /unnick are registered through Paper's Brigadier API (see NickNames#onEnable),
+# so they are intentionally not declared under "commands:".
