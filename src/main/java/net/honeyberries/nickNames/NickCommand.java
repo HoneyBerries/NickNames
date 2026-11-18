@@ -101,9 +101,10 @@ public final class NickCommand {
         repository.save(player.getUniqueId(), raw).whenComplete((ignored, error) -> {
             if (error != null) {
                 plugin.getLogger().log(Level.WARNING, "Could not save nickname for " + player.getName(), error);
-                player.sendMessage(Component.text(
+                // The future completes on the DB thread; messaging must happen on the player's region.
+                player.getScheduler().run(plugin, task -> player.sendMessage(Component.text(
                         "Your nickname was set, but could not be saved and will reset when you log out.",
-                        NamedTextColor.RED));
+                        NamedTextColor.RED)), null);
             }
         });
         return Command.SINGLE_SUCCESS;
