@@ -62,9 +62,10 @@ public final class UnnickCommand {
         repository.delete(player.getUniqueId()).whenComplete((ignored, error) -> {
             if (error != null) {
                 plugin.getLogger().log(Level.WARNING, "Could not delete nickname for " + player.getName(), error);
-                player.sendMessage(Component.text(
+                // The future completes on the DB thread; messaging must happen on the player's region.
+                player.getScheduler().run(plugin, task -> player.sendMessage(Component.text(
                         "Your nickname was removed, but the saved copy could not be deleted and may return when you log in.",
-                        NamedTextColor.RED));
+                        NamedTextColor.RED)), null);
             }
         });
         return Command.SINGLE_SUCCESS;

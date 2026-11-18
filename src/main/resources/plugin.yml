@@ -5,6 +5,7 @@ description: Lets players set a custom, MiniMessage-formatted nickname with /nic
 main: net.honeyberries.nickNames.NickNames
 api-version: '26.3'
 load: POSTWORLD
+folia-supported: true
 
 authors: [ HoneyBerries, Pepmon270 ]
 website: https://honeyberries.net
